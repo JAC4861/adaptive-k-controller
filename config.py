@@ -50,7 +50,6 @@ config_args = {
         # ---- Distortion (precomputed mode) ----
         'distortion-use-precomputed': (0, '1=use precomputed pairs file'),
         'distortion-pairs-file': (None, 'path to precomputed pairs (.npy/.pt)'),
-        # NOTE: limit 行已移除，改用下面单独 add_argument
         'distortion-pre-shuffle': (0, '1=shuffle precomputed pairs before limit'),
         'distortion-allow-missing-hop': (0, '1=allow (i,j) without hop and BFS'),
         # ---- Misc ----
