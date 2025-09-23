@@ -7,7 +7,7 @@ This repository contains the official PyTorch implementation for the paper **"Wh
 
 ## 1. Overview
 
-This repository provides the code to study the "task-geometry decoupling" problem and contains an implementation of our proposed **Adaptive-K Controller** applied to Hyperbolic Graph Convolutional Networks (HGCN) [1].
+This repository provides the code to study the "task-geometry decoupling" problem and contains an implementation of our proposed **Adaptive-K Controller** applied to Hyperbolic Graph Convolutional Networks (HGCN).
 
 The library allows for training and evaluation of the following methods for the **link prediction (`lp`)** task:
 
