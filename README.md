@@ -136,7 +136,7 @@ If you find our work useful in your research, please consider citing our paper:
 ```bibtex
 @misc{chen2025decoupling,
   title={When Task Performance Deceives: Decoupling Task and Geometric Fidelity in Hyperbolic GNNs},
-  author={Chen, Lixian and Wang, Jingchao and Dai, Zhaorong and Liu, Hanqian and Ai, Danxiang},
+  author={Chen, Lixian and Wang, Jingchao and Dai, Zhaorong and Liu, Hanqian and Ai, Danxiang and Yang, Shi},
   year={2025},
   howpublished={Technical Report},
   note={Preprint}
