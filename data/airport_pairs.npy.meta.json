@@ -1,0 +1,9 @@
+{
+  "dataset": "airport",
+  "datapath": "/home/lixianchen/hgcn-master11/hgcn-master/data",
+  "max_hop": 8,
+  "request_max_pairs": 20000,
+  "seed": 2025,
+  "produced_pairs": 20000,
+  "nodes": 11922
+}
