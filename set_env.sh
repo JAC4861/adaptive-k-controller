@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
-export HGCN_HOME=$(pwd)
-export LOG_DIR="$HGCN_HOME/logs"
-export PYTHONPATH="$HGCN_HOME:$PYTHONPATH"
-export DATAPATH="$HGCN_HOME/data"
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/cuda-9.0/lib64
-source activate hgcn  # replace with source hgcn/bin/activate if you used a virtualenv
+
+export PROJECT_HOME=$(pwd)
+export LOG_DIR="$PROJECT_HOME/logs"
+export DATAPATH="$PROJECT_HOME/data"
+export PYTHONPATH="$PROJECT_HOME:$PYTHONPATH"
+
+conda activate hgcn_controller
