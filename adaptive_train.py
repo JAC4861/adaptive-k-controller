@@ -14,7 +14,7 @@ from utils.curvature_control import CurvatureController
 import optimizers
 
 # -------------------------------------------------
-# 注入额外控制/监控参数
+# Inject additional control/monitoring parameters
 # -------------------------------------------------
 def _maybe_add_args(p):
     new_flags = [
@@ -43,7 +43,7 @@ def _maybe_add_args(p):
         p.add_argument('--curv_lr_scale', type=float, default=1.0,
                          help='LR scale for curvature params')
     
-    # --- MODIFICATION: 添加 force_preprocess 参数 ---
+    # --- MODIFICATION: Add the force_preprocess parameter ---
     if 'force_preprocess' not in existing:
         p.add_argument('--force_preprocess', action='store_true',
                          help='If set, force data preprocessing even if cache exists.')
@@ -53,7 +53,7 @@ def _maybe_add_args(p):
 _maybe_add_args(parser)
 
 # -------------------------------------------------
-# 工具函数
+# Utility function
 # -------------------------------------------------
 def current_curvature_value(model, default_c, last_known_value=None):
     try:
@@ -97,7 +97,7 @@ def maybe_monitor_dist(args, embeddings, data, model):
     return res.get('distortion', None)
 
 # -------------------------------------------------
-# 主入口
+# Main
 # -------------------------------------------------
 def main():
     args = parser.parse_args()
@@ -141,11 +141,9 @@ def main():
     datapath = os.environ.get('DATAPATH', './data')
     dataset_root = os.path.join(datapath, args.dataset)
 
-# 为了确保万无一失，我们在这里强制开启特征归一化
-# 这会覆盖掉任何命令行参数的默认值
     # args.normalize_feats = True 
 
-# 直接调用核心数据加载函数，这将使用 data_utils.py 内部的 .pkl 缓存机制
+# Call the core data loading function directly, which will use the.pkl caching mechanism inside data_utils.py
     from utils.data_utils import load_data
     data = load_data(args, dataset_root)
     logging.info("[Data] Data loaded and processed via data_utils.py.")
@@ -239,7 +237,7 @@ def main():
     best_val_metrics = model.init_metric_dict()
     best_emb = None
     best_epoch = -1
-    best_model_state = None # <--- 在这里新增一行
+    best_model_state = None 
     counter = 0
     last_curv_value = None
     stress_at_best = None
@@ -391,7 +389,7 @@ def main():
             np.save(os.path.join(save_dir,'embeddings.npy'), best_emb.numpy())
         logging.info("[Save] artifacts saved.")
 
-    # ====== 最终标准化输出（供 bash 解析） ======
+    # ====== Final standardized output (for bash parsing) ======
     print("\n" + "="*40)
     print("====== FINAL STANDARDIZED METRICS FOR PARSER ======")
     val_main = pick_val_metric(best_val_metrics)
