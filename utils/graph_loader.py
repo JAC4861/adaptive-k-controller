@@ -11,14 +11,12 @@ import pickle as pkl
 ############################################################
 
 def scipy_sparse_to_torch_sparse_tensor(sparse_mx):
-    """将一个 scipy 稀疏矩阵转换为 torch 稀疏张量。"""
     sparse_mx = sparse_mx.tocoo().astype(np.float32)
     indices = torch.from_numpy(
         np.vstack((sparse_mx.row, sparse_mx.col)).astype(np.int64)
     )
     values = torch.from_numpy(sparse_mx.data)
     shape = torch.Size(sparse_mx.shape)
-    # 推荐使用 torch.sparse_coo_tensor
     return torch.sparse_coo_tensor(indices, values, shape)
 
 
@@ -34,7 +32,6 @@ def parse_index_file(filename):
     return index
 
 def load_planetoid_adj(dataset_name, datapath):
-    """加载 Planetoid 格式的图数据 (cora, citeseer, pubmed)"""
     names = ['x', 'y', 'tx', 'ty', 'allx', 'ally', 'graph']
     objects = []
     for i in range(len(names)):
@@ -63,7 +60,7 @@ def load_airport_adj(dataset_name, datapath):
         edge_file_path,
         sep=',',
         header=None,
-        usecols=[3, 5], # 仅读取第4和第6列
+        usecols=[3, 5], 
         dtype=str
     ).replace(r'\\N', np.nan, regex=True).dropna()
 
@@ -89,16 +86,13 @@ import numpy as np
 import scipy.sparse as sp
 
 def load_disease_lp_adj(dataset_name, datapath):
-    """加载 disease_lp 数据集"""
     dir_path = os.path.join(datapath, dataset_name)
     
-    # 修正 1: 将文件名中的 '.' 修改为 '_'
     edge_file_path = os.path.join(dir_path, 'disease_lp.edges.csv')
     
     if not os.path.exists(edge_file_path):
         raise FileNotFoundError(f"Cannot find edge file for disease_lp: {edge_file_path}")
 
-    # 修正 2: 由于文件没有表头，在读取时添加 header=None 和 names 参数
     edges_df = pd.read_csv(
         edge_file_path, 
         header=None, 
@@ -108,7 +102,6 @@ def load_disease_lp_adj(dataset_name, datapath):
     source_nodes = edges_df['source'].values
     target_nodes = edges_df['target'].values
 
-    # 加载特征文件以确定节点总数 (这部分逻辑保持不变)
     feats_path = os.path.join(dir_path, 'disease_lp.feats.npz')
     if os.path.exists(feats_path):
         features = sp.load_npz(feats_path)
@@ -116,7 +109,6 @@ def load_disease_lp_adj(dataset_name, datapath):
     else:
         num_nodes = max(source_nodes.max(), target_nodes.max()) + 1
 
-    # 构建邻接矩阵 (这部分逻辑保持不变)
     adj = sp.coo_matrix(
         (np.ones(len(source_nodes)), (source_nodes, target_nodes)),
         shape=(num_nodes, num_nodes),
@@ -125,13 +117,10 @@ def load_disease_lp_adj(dataset_name, datapath):
     return adj
 
 ############################################################
-# -------- 统一入口函数 ------------------------------------
+# -------- Main ------------------------------------
 ############################################################
 
 def get_adj_only(dataset_name, datapath):
-    """
-    根据 dataset_name 加载邻接矩阵并返回一个 PyTorch 稀疏张量
-    """
     if dataset_name in ['cora', 'citeseer', 'pubmed']:
         print(f"[INFO] Loading '{dataset_name}' with Planetoid loader...")
         adj = load_planetoid_adj(dataset_name, datapath)
@@ -144,11 +133,8 @@ def get_adj_only(dataset_name, datapath):
     else:
         raise RuntimeError(f"[ERROR] Unknown dataset: {dataset_name}")
 
-    # ---- 统一后处理 ----
-    # 建立无向图
     adj = adj + adj.T.multiply(adj.T > adj) - adj.multiply(adj.T > adj)
     adj.setdiag(0)
     adj.eliminate_zeros()
 
-    # --- 关键修改: 将最终的 scipy 矩阵转换为 PyTorch 稀疏张量 ---
     return scipy_sparse_to_torch_sparse_tensor(adj)
