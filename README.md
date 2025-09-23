@@ -28,7 +28,7 @@ We recommend using Conda for environment management.
 
 1.  **Clone this repository:**
     ```bash
-    git clone [https://github.com/](https://github.com/)[Your-Username]/[Your-Repo-Name].git
+    git clone https://github.com/JAC4861/adaptive-k-controller.git
     cd [Your-Repo-Name]
     ```
 2.  **Create and activate the conda environment:**
