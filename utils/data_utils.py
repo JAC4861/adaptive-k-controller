@@ -10,14 +10,9 @@ import torch
 
 
 def load_data(args, datapath):
-    """
-    根據給定的任務和資料集載入資料。
-    此函式作為一個分派器，並在之後執行最終的處理步驟，如正規化和特徵增強。
-    """
     if args.task == 'nc':
         data = load_data_nc(args.dataset, args.use_feats, datapath, args.split_seed)
     else:
-        # 對於連結預測，我們先載入基礎資料，然後再切分邊。
         data = load_data_lp(args.dataset, args.use_feats, datapath)
         adj = data['adj_train']
         if args.task == 'lp':
@@ -29,7 +24,6 @@ def load_data(args, datapath):
             data['val_edges'], data['val_edges_false'] = val_edges, val_edges_false
             data['test_edges'], data['test_edges_false'] = test_edges, test_edges_false
             
-    # 對所有資料集和任務進行通用處理
     data['adj_train_norm'], data['features'] = process(
             data['adj_train'], data['features'], args.normalize_adj, args.normalize_feats
     )
@@ -38,13 +32,14 @@ def load_data(args, datapath):
     return data
 
 
-# ############### 特徵處理 ####################################
+# ############### Feature processing ####################################
 
 
 def process(adj, features, normalize_adj, normalize_feats):
     """
-    處理鄰接矩陣和特徵。
-    包含將特徵轉為密集的 numpy 陣列、正規化特徵和正規化鄰接矩陣。
+    Handle the adjacency matrix and features.
+
+    It includes converting features into dense numpy arrays, normalizing features, and normalizing adjacency matrices。
     """
     if sp.isspmatrix(features):
         features = np.array(features.todense())
@@ -52,14 +47,12 @@ def process(adj, features, normalize_adj, normalize_feats):
         features = normalize(features)
     features = torch.Tensor(features)
     if normalize_adj:
-        # 在正規化前添加自環 (self-loops)
         adj = normalize(adj + sp.eye(adj.shape[0]))
     adj = sparse_mx_to_torch_sparse_tensor(adj)
     return adj, features
 
 
 def normalize(mx):
-    """對稀疏矩陣進行行正規化 (Row-normalize)"""
     rowsum = np.array(mx.sum(1))
     r_inv = np.power(rowsum, -1).flatten()
     r_inv[np.isinf(r_inv)] = 0.
@@ -69,7 +62,6 @@ def normalize(mx):
 
 
 def sparse_mx_to_torch_sparse_tensor(sparse_mx):
-    """將 scipy 稀疏矩陣轉換為 torch 稀疏張量"""
     sparse_mx = sparse_mx.tocoo()
     indices = torch.from_numpy(
             np.vstack((sparse_mx.row, sparse_mx.col)).astype(np.int64)
@@ -80,11 +72,7 @@ def sparse_mx_to_torch_sparse_tensor(sparse_mx):
 
 
 def augment(adj, features, normalize_feats=True):
-    """
-    為 'airport' 資料集的特徵添加節點度 (degree) 資訊以進行增強。
-    """
     deg = np.squeeze(np.sum(adj, axis=0).astype(int))
-    # 將度大於 5 的值設為 5
     deg[deg > 5] = 5
     deg_onehot = torch.tensor(np.eye(6)[deg], dtype=torch.float).squeeze()
     const_f = torch.ones(features.size(0), 1)
@@ -92,19 +80,14 @@ def augment(adj, features, normalize_feats=True):
     return features
 
 
-# ############### 資料切分 #####################################################
+# ############### Data segmentation #####################################################
 
 
 def mask_edges(adj, val_prop, test_prop, seed):
-    """
-    為連結預測任務，將邊切分為訓練、驗證和測試集。
-    同時為每個集合採樣負邊 (negative edges)。
-    """
     np.random.seed(seed)  # 獲取正邊 (true positive)
     x, y = sp.triu(adj).nonzero()
     pos_edges = np.array(list(zip(x, y)))
     np.random.shuffle(pos_edges)
-    # 獲取負邊 (true negative)
     x, y = sp.triu(sp.csr_matrix(1. - adj.toarray())).nonzero()
     neg_edges = np.array(list(zip(x, y)))
     np.random.shuffle(neg_edges)
@@ -123,7 +106,6 @@ def mask_edges(adj, val_prop, test_prop, seed):
 
 
 def split_data(labels, val_prop, test_prop, seed):
-    """將節點索引切分為訓練、驗證和測試集"""
     np.random.seed(seed)
     nb_nodes = labels.shape[0]
     all_idx = np.arange(nb_nodes)
@@ -144,26 +126,20 @@ def split_data(labels, val_prop, test_prop, seed):
 
 
 def bin_feat(feat, bins):
-    """為 'airport' 資料集的標籤進行特徵二值化"""
     digitized = np.digitize(feat, bins)
     return digitized - digitized.min()
 
 
-# ############### 連結預測資料載入器 ####################################
+# ############### Link to the prediction data loader ####################################
 
 
 def load_data_lp(dataset, use_feats, data_path):
-    """
-    為連結預測任務載入資料。
-    現在為所有資料集提供快取機制。
-    """
-    ### 修改開始：為連結預測任務添加通用快取機制 ###
     processed_dir = os.path.join(data_path, "processed", dataset)
     os.makedirs(processed_dir, exist_ok=True)
     cache_file = os.path.join(processed_dir, f"lp_usefeats{use_feats}.pkl")
 
     if os.path.exists(cache_file):
-        print(f"[*] 正在從 {cache_file} 載入 {dataset} 的連結預測已處理資料")
+        print(f"[*] Link prediction processed data is being loaded from {cache_file} to {dataset}")
         with open(cache_file, "rb") as f:
             data = pkl.load(f)
         return data
@@ -176,39 +152,30 @@ def load_data_lp(dataset, use_feats, data_path):
     elif dataset == 'airport':
         adj, features = load_data_airport(dataset, data_path, return_label=False)
     else:
-        raise FileNotFoundError('不支援資料集: {}'.format(dataset))
+        raise FileNotFoundError('Datasets are not supported: {}'.format(dataset))
     
     data = {'adj_train': adj, 'features': features}
     
-    ### 修改開始：將處理好的資料儲存至快取檔案 ###
     with open(cache_file, "wb") as f:
         pkl.dump(data, f)
-    print(f"[*] 已將 {dataset} 的連結預測已處理資料儲存至 {cache_file}")
-    ### 修改結束 ###
+    print(f"[*] The link prediction processed data of {dataset} has been stored to {cache_file}")
 
     return data
 
 
-# ############### 節點分類資料載入器 ####################################
+# ############### Node classification data loader ####################################
 
 
 def load_data_nc(dataset, use_feats, data_path, split_seed):
-    """
-    為節點分類任務載入資料。
-    現在為所有資料集提供快取機制。
-    """
-    ### 修改開始：為節點分類任務添加通用快取機制 ###
     processed_dir = os.path.join(data_path, "processed", dataset)
     os.makedirs(processed_dir, exist_ok=True)
-    # 使用 .pkl 格式，因為它能處理多種 Python 物件，如 scipy 稀疏矩陣
     cache_file = os.path.join(processed_dir, f"nc_seed{split_seed}_usefeats{use_feats}.pkl")
 
     if os.path.exists(cache_file):
-        print(f"[*] 正在從 {cache_file} 載入 {dataset} 的節點分類已處理資料")
+        print(f"[*] Nodes that are loading {dataset} from {cache_file} classify processed data")
         with open(cache_file, "rb") as f:
             data = pkl.load(f)
         return data
-    ### 修改結束 ###
 
     if dataset in ['cora', 'pubmed']:
         adj, features, labels, idx_train, idx_val, idx_test = load_citation_data(
@@ -222,30 +189,24 @@ def load_data_nc(dataset, use_feats, data_path, split_seed):
             adj, features, labels = load_data_airport(dataset, data_path, return_label=True)
             val_prop, test_prop = 0.15, 0.15
         else:
-            raise FileNotFoundError('不支援資料集: {}'.format(dataset))
+            raise FileNotFoundError('Datasets are not supported: {}'.format(dataset))
         idx_val, idx_test, idx_train = split_data(labels, val_prop, test_prop, seed=split_seed)
 
     labels = torch.LongTensor(labels)
     data = {'adj_train': adj, 'features': features, 'labels': labels, 'idx_train': idx_train, 'idx_val': idx_val,
             'idx_test': idx_test}
     
-    ### 修改開始：將處理好的資料儲存至快取檔案 ###
     with open(cache_file, "wb") as f:
         pkl.dump(data, f)
-    print(f"[*] 已將 {dataset} 的節點分類已處理資料儲存至 {cache_file}")
-    ### 修改結束 ###
+    print(f"[*] The node classification of {dataset} has been processed and stored in {cache_file}")
 
     return data
 
 
-# ############### 資料集 ####################################
+# ############### Datasets ####################################
 
 
 def load_citation_data(dataset_str, use_feats, data_path, split_seed=None):
-    """
-    載入引文網路資料 (cora, pubmed)。
-    原先針對 pubmed 的特定快取邏輯已被移除，並在呼叫函式中進行了通用化處理。
-    """
     names = ['x', 'y', 'tx', 'ty', 'allx', 'ally', 'graph']
     objects = []
     for i in range(len(names)):
@@ -278,7 +239,6 @@ def load_citation_data(dataset_str, use_feats, data_path, split_seed=None):
 
 
 def parse_index_file(filename):
-    """解析索引檔案"""
     index = []
     for line in open(filename):
         index.append(int(line.strip()))
@@ -286,7 +246,6 @@ def parse_index_file(filename):
 
 
 def load_synthetic_data(dataset_str, use_feats, data_path):
-    """載入合成資料集 (disease_nc, disease_lp)"""
     object_to_idx = {}
     idx_counter = 0
     edges = []
@@ -320,7 +279,6 @@ def load_synthetic_data(dataset_str, use_feats, data_path):
 
 
 def load_data_airport(dataset_str, data_path, return_label=False):
-    """載入 airport 資料集"""
     graph = pkl.load(open(os.path.join(data_path, dataset_str + '.p'), 'rb'))
     adj = nx.adjacency_matrix(graph)
     features = np.array([graph.nodes[u]['feat'] for u in graph.nodes()])
