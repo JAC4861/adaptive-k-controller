@@ -92,7 +92,6 @@ parser = argparse.ArgumentParser()
 for _, cfg in config_args.items():
     parser = add_flags_from_config(parser, cfg)
 
-# 单独以 int 类型重新注册 limit（因为上面已去掉）
 parser.add_argument('--distortion-pairs-limit', type=int, default=None,
                     help='truncate to first N precomputed pairs (int)')
 
