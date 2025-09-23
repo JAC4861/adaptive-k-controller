@@ -3,11 +3,11 @@ A theory-grounded Adaptive-K Controller to prevent geometric collapse and stabil
 
 # When Task Performance Deceives: Task-Geometry Decoupling in Learnable-Curvature Hyperbolic GNNs
 
-This repository contains the official PyTorch implementation for the paper **"When Task Performance Deceives: Decoupling Task and Geometric Fidelity in Hyperbolic GNNs"**.
+This repository contains the official PyTorch implementation for the paper **"When Task Performance Deceives: Task-Geometry Decoupling in Learnable-Curvature Hyperbolic GNNs"**.
 
 ## 1. Overview
 
-This repository provides the code to study the "task-geometry decoupling" problem and contains an implementation of our proposed **Adaptive-K Controller** applied to Hyperbolic Graph Convolutional Networks (HGCN) [1].
+This repository provides the code to study the "task-geometry decoupling" problem and contains an implementation of our proposed **Adaptive-K Controller** applied to Hyperbolic Graph Convolutional Networks (HGCN) .
 
 The library allows for training and evaluation of the following methods for the **link prediction (`lp`)** task:
 
